@@ -1,0 +1,357 @@
+```html
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moe's Space - Daily Planner</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans for clean, aesthetic look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        stone: {
+                            50: '#fafaf9',
+                            100: '#f5f5f4',
+                            200: '#e7e5e4',
+                            300: '#d6d3d1',
+                            400: '#a8a29e',
+                            500: '#78716c',
+                            600: '#57534e',
+                            700: '#44403c',
+                            800: '#292524',
+                            900: '#1c1917',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-card {
+                @apply bg-white/70 dark:bg-[#1c1917]/70 backdrop-blur-md border border-stone-200 dark:border-stone-800 shadow-sm rounded-3xl;
+            }
+            .input-field {
+                @apply w-full bg-transparent border-b border-stone-300 dark:border-stone-700 py-2 focus:outline-none focus:border-stone-800 dark:focus:border-stone-300 transition-colors text-stone-800 dark:text-stone-100 placeholder-stone-400;
+            }
+            .btn-primary {
+                @apply bg-stone-900 text-stone-50 dark:bg-stone-100 dark:text-stone-900 px-6 py-2.5 rounded-full font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-all active:scale-95 flex items-center justify-center gap-2;
+            }
+            
+            /* Custom Scrollbar */
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                @apply bg-stone-300 dark:bg-stone-700 rounded-full;
+            }
+        }
+
+        body {
+            @apply bg-[#F4F4F2] dark:bg-[#121110] transition-colors duration-500 min-h-screen text-stone-800 dark:text-stone-200;
+            background-image: radial-gradient(circle at 50% 0%, rgba(120, 113, 108, 0.05) 0%, transparent 50%);
+        }
+    </style>
+</head>
+<body class="antialiased p-4 md:p-8 selection:bg-stone-300 selection:text-stone-900 dark:selection:bg-stone-700 dark:selection:text-stone-100">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold tracking-tight mb-1">Halo, Moe! ✨</h1>
+                <p class="text-stone-500 dark:text-stone-400 font-medium" id="current-date">Memuat tanggal...</p>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="glass-card px-4 py-2 font-mono text-sm tracking-widest hidden md:block" id="live-clock">
+                    00:00
+                </div>
+                <button onclick="toggleTheme()" class="glass-card p-3 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" aria-label="Toggle Dark Mode">
+                    <i class="ph ph-moon text-xl block dark:hidden"></i>
+                    <i class="ph ph-sun text-xl hidden dark:block text-yellow-100"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Daily Planner (Span 7) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Add Task Form -->
+                <div class="glass-card p-6 md:p-8">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i class="ph ph-calendar-plus text-stone-500"></i> Tambah Jadwal Baru
+                    </h2>
+                    
+                    <form id="task-form" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1 block">Kegiatan</label>
+                                <input type="text" id="task-name" class="input-field" placeholder="Cth: Ngopi sambil baca buku..." required>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1 block">Waktu</label>
+                                <input type="time" id="task-time" class="input-field" required>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pt-2">
+                            <div class="w-full md:w-auto">
+                                <label class="text-xs font-semibold text-stone-500 uppercase tracking-wider mb-1 block">Kategori</label>
+                                <select id="task-category" class="input-field cursor-pointer">
+                                    <option value="Rutinitas">Rutinitas</option>
+                                    <option value="Hobi">Hobi</option>
+                                    <option value="Kerja">Kerja / Belajar</option>
+                                    <option value="Me Time">Me Time</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary w-full md:w-auto mt-4 md:mt-0">
+                                <i class="ph ph-plus-circle text-lg"></i> Tambahkan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Task List -->
+                <div>
+                    <h3 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4 ml-2">Jadwal Hari Ini</h3>
+                    <div id="task-container" class="space-y-3">
+                        <!-- Tasks will be injected here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Special Moments (Span 5) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Add Moment Form -->
+                <div class="glass-card p-6 md:p-8 relative overflow-hidden">
+                    <!-- Decorative element -->
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-stone-200 dark:bg-stone-800 rounded-full blur-2xl opacity-50"></div>
+                    
+                    <h2 class="text-xl font-semibold mb-6 flex items-center gap-2 relative z-10">
+                        <i class="ph ph-sparkle text-stone-500"></i> Momen Spesial
+                    </h2>
+                    
+                    <form id="moment-form" class="relative z-10">
+                        <textarea id="moment-text" rows="3" class="input-field resize-none" placeholder="Ada kejadian menarik atau pikiran apa hari ini, Moe?" required></textarea>
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="text-sm font-semibold bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 px-4 py-2 rounded-full transition-colors flex items-center gap-2">
+                                Simpan <i class="ph ph-paper-plane-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Moments List -->
+                <div>
+                    <h3 class="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4 ml-2">Jejak Hari Ini</h3>
+                    <div id="moment-container" class="space-y-4">
+                        <!-- Moments will be injected here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- State Management (In-Memory for single session) ---
+        let tasks = [];
+        let moments = [];
+
+        // --- Theme Management ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+            } else {
+                html.classList.add('dark');
+            }
+        }
+
+        // --- Time & Date Functions ---
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Date formatting
+            const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = now.toLocaleDateString('id-ID', optionsDate);
+            
+            // Time formatting
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('live-clock').innerText = `${hours}:${minutes}`;
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime(); // Initial call
+
+        // --- Task Management ---
+        const taskForm = document.getElementById('task-form');
+        const taskContainer = document.getElementById('task-container');
+
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('task-name').value;
+            const time = document.getElementById('task-time').value;
+            const category = document.getElementById('task-category').value;
+
+            const newTask = {
+                id: Date.now().toString(),
+                name,
+                time,
+                category,
+                completed: false
+            };
+
+            tasks.push(newTask);
+            // Sort tasks by time
+            tasks.sort((a, b) => a.time.localeCompare(b.time));
+            
+            renderTasks();
+            taskForm.reset();
+        });
+
+        function toggleTaskComplete(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderTasks();
+        }
+
+        function getCategoryColor(category) {
+            switch(category) {
+                case 'Rutinitas': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+                case 'Hobi': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-800';
+                case 'Me Time': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800';
+                case 'Kerja': return 'bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-300 border-stone-300 dark:border-stone-700';
+                default: return 'bg-stone-100 text-stone-600 dark:bg-stone-800/50 dark:text-stone-400 border-stone-200 dark:border-stone-700';
+            }
+        }
+
+        function renderTasks() {
+            if (tasks.length === 0) {
+                taskContainer.innerHTML = `
+                    <div class="text-center py-8 px-4 border border-dashed border-stone-300 dark:border-stone-700 rounded-3xl">
+                        <i class="ph ph-coffee text-4xl text-stone-300 dark:text-stone-600 mb-2"></i>
+                        <p class="text-stone-500 dark:text-stone-400 text-sm">Belum ada jadwal. Yuk rencanakan hari ini!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            taskContainer.innerHTML = tasks.map(task => `
+                <div class="glass-card p-4 flex items-center gap-4 group hover:shadow-md transition-shadow">
+                    <button onclick="toggleTaskComplete('${task.id}')" class="flex-shrink-0 w-6 h-6 rounded-full border-2 ${task.completed ? 'bg-stone-800 border-stone-800 dark:bg-stone-200 dark:border-stone-200 text-white dark:text-stone-900' : 'border-stone-400 dark:border-stone-500'} flex items-center justify-center transition-colors">
+                        ${task.completed ? '<i class="ph ph-check text-xs font-bold"></i>' : ''}
+                    </button>
+                    
+                    <div class="flex-grow min-w-0">
+                        <p class="font-semibold text-lg truncate ${task.completed ? 'line-through text-stone-400 dark:text-stone-600' : ''}">${task.name}</p>
+                        <div class="flex items-center gap-3 mt-1 text-xs">
+                            <span class="flex items-center gap-1 font-mono text-stone-500 dark:text-stone-400">
+                                <i class="ph ph-clock"></i> ${task.time}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full border ${getCategoryColor(task.category)}">
+                                ${task.category}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="deleteTask('${task.id}')" class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 dark:text-red-500 dark:hover:text-red-400 p-2 transition-opacity focus:opacity-100" aria-label="Hapus">
+                        <i class="ph ph-trash text-lg"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // --- Moment Management ---
+        const momentForm = document.getElementById('moment-form');
+        const momentContainer = document.getElementById('moment-container');
+
+        momentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = document.getElementById('moment-text').value;
+            const now = new Date();
+            const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const newMoment = {
+                id: Date.now().toString(),
+                text,
+                time: timeString
+            };
+
+            // Add to beginning of array
+            moments.unshift(newMoment);
+            renderMoments();
+            momentForm.reset();
+        });
+
+        function deleteMoment(id) {
+            moments = moments.filter(m => m.id !== id);
+            renderMoments();
+        }
+
+        function renderMoments() {
+            if (moments.length === 0) {
+                momentContainer.innerHTML = `
+                    <div class="text-center py-8 px-4 border border-dashed border-stone-300 dark:border-stone-700 rounded-3xl">
+                        <i class="ph ph-notebook text-4xl text-stone-300 dark:text-stone-600 mb-2"></i>
+                        <p class="text-stone-500 dark:text-stone-400 text-sm">Belum ada momen yang tercatat.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            momentContainer.innerHTML = moments.map(moment => `
+                <div class="p-5 border border-stone-200 dark:border-stone-800 bg-white/40 dark:bg-stone-900/40 rounded-2xl relative group">
+                    <button onclick="deleteMoment('${moment.id}')" class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-stone-400 hover:text-red-400 transition-opacity" aria-label="Hapus">
+                        <i class="ph ph-x"></i>
+                    </button>
+                    <p class="text-stone-700 dark:text-stone-300 leading-relaxed text-sm pr-6 italic">"${moment.text}"</p>
+                    <p class="text-xs text-stone-400 dark:text-stone-500 font-mono mt-3 text-right">- ${moment.time}</p>
+                </div>
+            `).join('');
+        }
+
+        // Initial Render
+        renderTasks();
+        renderMoments();
+    </script>
+</body>
+</html>
+
+```
